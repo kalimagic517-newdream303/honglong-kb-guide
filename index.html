@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>給紅蟲的操作指南｜用 Claude Code 建個人知識庫</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/tabler-icons.min.css">
+<style>
+:root{
+  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --page-bg:#f5f4ef; --surface-1:#eceae3; --surface-2:#ffffff;
+  --text-primary:#26251f; --text-secondary:#5f5e5a; --text-muted:#8b8a83;
+  --border:rgba(0,0,0,.1);
+  --bg-accent:#E6F1FB; --text-accent:#185FA5;
+  --bg-success:#EAF3DE; --text-success:#3B6D11;
+  --bg-pro:#EEEDFE; --text-pro:#534AB7;
+  --radius:8px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --page-bg:#262624; --surface-1:#33322f; --surface-2:#3b3a37;
+    --text-primary:#ededea; --text-secondary:#b4b2a9; --text-muted:#8b8a83;
+    --border:rgba(255,255,255,.12);
+    --bg-accent:#0C447C; --text-accent:#B5D4F4;
+    --bg-success:#27500A; --text-success:#C0DD97;
+    --bg-pro:#3C3489; --text-pro:#CECBF6;
+  }
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--page-bg);color:var(--text-primary);font-family:var(--font-sans);line-height:1.7;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:720px;margin:0 auto;padding:2.5rem 1.25rem 4rem;}
+a{color:var(--text-accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+code{font-family:var(--font-mono);font-size:.9em;background:var(--surface-1);padding:1px 5px;border-radius:5px;}
+b{font-weight:500;}
+h1{font-size:26px;font-weight:500;margin:0;letter-spacing:-.01em;}
+.sub{font-size:14px;color:var(--text-secondary);margin:8px 0 0;}
+.concept{background:var(--surface-1);border-radius:12px;padding:1rem 1.25rem;margin:1.5rem 0;}
+.concept h2{font-size:15px;font-weight:500;margin:0 0 4px;display:flex;align-items:center;gap:6px;}
+.concept p{font-size:14px;color:var(--text-secondary);margin:0 0 12px;}
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.layer{border-radius:var(--radius);padding:10px 12px;}
+.layer .t{font-size:13px;font-weight:500;margin:0;display:flex;align-items:center;gap:4px;}
+.layer .d{font-size:12px;margin:4px 0 0;}
+.step{display:flex;gap:14px;margin:1.75rem 0 0;}
+.num{flex:0 0 28px;height:28px;border-radius:50%;background:var(--bg-accent);color:var(--text-accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;}
+.body{flex:1;min-width:0;}
+.body h3{font-size:16px;font-weight:500;margin:3px 0 6px;}
+.body p{font-size:14px;color:var(--text-secondary);margin:0 0 8px;}
+.body ul{font-size:14px;color:var(--text-secondary);margin:0;padding-left:18px;}
+.body li{margin:2px 0;}
+.prompt{background:var(--surface-1);border-radius:var(--radius);padding:12px 14px;position:relative;margin-top:4px;}
+.prompt pre{font-family:var(--font-mono);font-size:13px;color:var(--text-primary);white-space:pre-wrap;word-break:break-word;margin:0;padding-right:64px;line-height:1.6;}
+.copy{position:absolute;top:8px;right:8px;font-size:12px;padding:4px 10px;border:.5px solid var(--border);background:var(--surface-2);color:var(--text-secondary);border-radius:var(--radius);cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-family:var(--font-sans);}
+.copy:hover{color:var(--text-primary);}
+.foot{border-top:.5px solid var(--border);margin-top:1.75rem;padding-top:14px;}
+.foot p{font-size:13px;color:var(--text-muted);margin:0;display:flex;align-items:flex-start;gap:6px;}
+.ti{vertical-align:-2px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>給紅蟲的操作指南</h1>
+    <p class="sub">建立個人外部知識庫 · 概念參考 Karpathy 的 LLM Wiki · 用 Claude Desktop 內建的 Claude Code + 一個 Obsidian vault</p>
+  </header>
+
+  <section class="concept">
+    <h2><i class="ti ti-bulb"></i>先搞懂一件事：這不是傳統 RAG</h2>
+    <p>與其每次都重新去撈原始文件，不如讓 Claude 增量維護一個「會複利」的 markdown 知識庫——知識整理一次就長在裡面，交叉連結持續累積。你負責丟資料、問好問題；Claude 負責所有繁瑣的整理與交叉引用。整個庫分成三層：</p>
+    <div class="layers">
+      <div class="layer" style="background:var(--bg-success);">
+        <p class="t" style="color:var(--text-success);"><i class="ti ti-lock"></i>原始資料</p>
+        <p class="d" style="color:var(--text-success);">你丟進來的東西，Claude 只讀不改</p>
+      </div>
+      <div class="layer" style="background:var(--bg-accent);">
+        <p class="t" style="color:var(--text-accent);"><i class="ti ti-notes"></i>整理頁</p>
+        <p class="d" style="color:var(--text-accent);">Claude 產生與維護的摘要、概念頁</p>
+      </div>
+      <div class="layer" style="background:var(--bg-pro);">
+        <p class="t" style="color:var(--text-pro);"><i class="ti ti-settings"></i>CLAUDE.md 規範</p>
+        <p class="d" style="color:var(--text-pro);">定義結構與工作流，這份讓 Claude Code 自己寫</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="body">
+      <h3>安裝 Obsidian，建一個 vault</h3>
+      <p>Obsidian 就是一個「打開資料夾當筆記本」的免費 app，原生支援 markdown 和 <code>[[wikilink]]</code>，跟這套玩法天生契合。</p>
+      <ul>
+        <li>到 <a href="https://obsidian.md/download" target="_blank" rel="noopener">obsidian.md/download</a> 下載並安裝（Mac／Windows 皆可，免費）。</li>
+        <li>打開後選 <b>Create new vault</b>，取個名字（例如 <code>my-kb</code>），選一個放檔案的資料夾位置，建立。</li>
+        <li>記住這個 vault 資料夾的路徑——等一下要讓 Claude Code 指到它。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="body">
+      <h3>在 Claude Desktop 裡開 Claude Code，指到 vault</h3>
+      <p>你已經裝好的 Claude Desktop 內建 Claude Code——它跟終端機的 CLI 版是同一個 agent，一樣會自動讀資料夾裡的 <code>CLAUDE.md</code>、一樣能直接讀寫檔案，只是介面是圖形化的。</p>
+      <ul>
+        <li>打開 Claude Desktop，開啟 Claude Code 面板。</li>
+        <li>把工作資料夾（working directory）設成第 1 步那個 vault 資料夾。</li>
+        <li>之後所有事情都在這個面板裡，用日常語言對 Claude 講就好。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="body">
+      <h3>用一句話，讓 Claude Code 用「問答」陪你把庫建起來</h3>
+      <p>不用預先想好結構，也不用自己寫 <code>CLAUDE.md</code>。把下面這段貼給 Claude Code，它會<b>先反過來問你用途</b>，再依你的回答逐步幫你設計並建立整個知識庫。</p>
+      <div class="prompt">
+        <button class="copy"><i class="ti ti-copy"></i>複製</button>
+        <pre>我想在這個資料夾建立一個「個人外部知識庫」，概念參考 Andrej Karpathy 的 LLM wiki：讓你增量維護一個會複利的 markdown 知識庫，而不是每次重查的 RAG。
+
+我還沒想好完整結構，想跟你一起逐步建立。請先用問句了解我的用途——例如我主要想收什麼類型的內容、平常會怎麼用它、想解決什麼問題——一次問一個問題。等你了解得差不多，再依我的回答幫我設計並建立：
+- 合適的資料夾與檔案結構（原始資料、你維護的整理頁、index、log 等）
+- 一份放在根目錄的 CLAUDE.md 當規範，定義檔名、frontmatter、用 [[wikilinks]] 交叉連結，以及日常的 ingest / query / lint 工作流
+
+全部用 markdown、連結一律用 Obsidian 的 [[wikilink]] 語法。先問我第一個問題吧。</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="body">
+      <h3>之後就自然地用它，回 Obsidian 看成果</h3>
+      <p>建好之後<b>不需要背任何特殊指令</b>——因為 <code>CLAUDE.md</code> 已經讓 Claude Code 知道這個 vault 的規範與存在，你直接用日常語言講「幫我把這篇收進來」「根據我的庫回答某問題」就好。回到 Obsidian，Claude 寫的頁面會即時出現；點 <code>[[wikilink]]</code> 在頁面間跳轉，打開 <b>Graph view</b>（左側工具列的關係圖示）就能看到知識庫的連結網絡慢慢長大——這就是「複利」的樣子。</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <p><i class="ti ti-info-circle"></i><span>心法：人負責「丟好的資料、問好的問題」，Claude 負責所有 bookkeeping（交叉引用、一致性、一次改很多頁）。庫越用越值錢。</span></p>
+  </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var pre=btn.parentElement.querySelector('pre');
+    var text=pre?pre.textContent:'';
+    navigator.clipboard.writeText(text).then(function(){
+      var old=btn.innerHTML;
+      btn.innerHTML='<i class="ti ti-check"></i>已複製';
+      setTimeout(function(){btn.innerHTML=old;},1500);
+    });
+  });
+});
+</script>
+</body>
+</html>
